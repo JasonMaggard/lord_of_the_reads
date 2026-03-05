@@ -119,6 +119,14 @@ describe('App', () => {
     expect(screen.getByText('Genres: Fiction')).toBeInTheDocument();
   });
 
+  it('renders genre filter control and empty cart state', () => {
+    renderApp();
+
+    expect(screen.getByPlaceholderText('Filter by genre')).toBeInTheDocument();
+    expect(screen.getByText('Cart (0)')).toBeInTheDocument();
+    expect(screen.getByText('No books in cart.')).toBeInTheDocument();
+  });
+
   it('shows checkout disabled until required selections are present', () => {
     renderApp();
 
@@ -143,5 +151,34 @@ describe('App', () => {
     renderApp();
 
     expect(screen.getByText('Order created: order_0001')).toBeInTheDocument();
+  });
+
+  it('renders review success feedback when review mutation returns data', () => {
+    mockedUseMutation.mockReset();
+    mockedUseMutation
+      .mockReturnValueOnce([
+        vi.fn(),
+        {
+          data: undefined,
+          loading: false,
+          error: undefined,
+        },
+      ] as never)
+      .mockReturnValueOnce([
+        vi.fn(),
+        {
+          data: {
+            createReview: {
+              id: 'review_0001',
+            },
+          },
+          loading: false,
+          error: undefined,
+        },
+      ] as never);
+
+    renderApp();
+
+    expect(screen.getByText('Review created.')).toBeInTheDocument();
   });
 });

@@ -12,8 +12,8 @@
 ## Current Snapshot
 
 - Date: 2026-03-05
-- Active phase: Phase 15 implementation complete (awaiting manual review)
-- Overall status: In progress (Phases 1-15 implemented)
+- Active phase: Phase 16 implementation complete (awaiting manual review)
+- Overall status: In progress (Phases 1-16 implemented)
 
 ---
 
@@ -580,3 +580,33 @@ Lessons learned:
 
 Next step:
 - Manual UI verification of genre filter + pagination behavior, then commit approved Phase 15 changes.
+
+### Phase 16 — Frontend Vitest coverage expansion
+
+Status: ✅ Implemented (pending manual review)
+
+Completed work:
+- Expanded `web/src/App.test.tsx` from 3 to 5 Vitest cases.
+- Added coverage for recent bookshelf and review/cart UI additions:
+	- genre filter control rendering
+	- empty cart rendering state
+	- review mutation success feedback rendering
+- Kept existing tests for baseline listing and checkout feedback behavior.
+- Audited `plan.md` vs `progress.md` phase coverage:
+	- all planned phases (1–10) are represented as completed in progress history
+	- no missing planned phase implementation entries found.
+
+Manual checks run (Docker only):
+- `POSTGRES_PORT=5433 docker compose exec web npm run test` (passes)
+
+Deviations from initial plan:
+- No architecture or API changes; this phase is test-only.
+
+Errors made / issues encountered:
+- None blocking.
+
+Lessons learned:
+- Component-level query/mutation mocking continues to provide stable high-signal coverage for this MVP frontend.
+
+Next step:
+- Manual review of expanded frontend tests, then commit approved Phase 16 changes.
