@@ -1,0 +1,134 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum Format {
+  HARDCOVER
+  SOFTCOVER
+  AUDIOBOOK
+  EREADER
+}
+
+model Book {
+  id          String       @id @default(cuid())
+  title       String
+  priceCents  Int
+  publisherId String
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  publisher   Publisher    @relation(fields: [publisherId], references: [id], onDelete: Restrict)
+  bookAuthors BookAuthor[]
+  bookGenres  BookGenre[]
+  bookFormats BookFormat[]
+  reviews     Review[]
+
+  @@index([title, id])
+  @@index([publisherId, title, id])
+}
+
+model Author {
+  id          String       @id @default(cuid())
+  name        String
+  bookAuthors BookAuthor[]
+
+  @@index([name, id])
+}
+
+model Publisher {
+  id    String @id @default(cuid())
+  name  String @unique
+  books Book[]
+}
+
+model Genre {
+  id        String      @id @default(cuid())
+  name      String      @unique
+  bookGenre BookGenre[]
+}
+
+model User {
+  id      String  @id @default(cuid())
+  name    String
+  reviews Review[]
+  orders  Order[]
+
+  @@index([name, id])
+}
+
+model BookAuthor {
+  bookId   String
+  authorId String
+
+  book     Book   @relation(fields: [bookId], references: [id], onDelete: Restrict)
+  author   Author @relation(fields: [authorId], references: [id], onDelete: Restrict)
+
+  @@id([bookId, authorId])
+  @@index([authorId, bookId])
+}
+
+model BookGenre {
+  bookId  String
+  genreId String
+
+  book    Book  @relation(fields: [bookId], references: [id], onDelete: Restrict)
+  genre   Genre @relation(fields: [genreId], references: [id], onDelete: Restrict)
+
+  @@id([bookId, genreId])
+  @@index([genreId, bookId])
+}
+
+model BookFormat {
+  bookId String
+  format Format
+
+  book   Book @relation(fields: [bookId], references: [id], onDelete: Restrict)
+
+  orderItems OrderItem[]
+
+  @@id([bookId, format])
+  @@index([format, bookId])
+}
+
+model Review {
+  id        String   @id @default(cuid())
+  userId    String
+  bookId    String
+  rating    Int
+  createdAt DateTime @default(now())
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Restrict)
+  book      Book     @relation(fields: [bookId], references: [id], onDelete: Restrict)
+
+  @@unique([userId, bookId])
+  @@index([bookId, createdAt])
+}
+
+model Order {
+  id        String      @id @default(cuid())
+  userId    String
+  createdAt DateTime    @default(now())
+
+  user      User        @relation(fields: [userId], references: [id], onDelete: Restrict)
+  items     OrderItem[]
+
+  @@index([userId, createdAt, id])
+}
+
+model OrderItem {
+  orderId        String
+  bookId         String
+  format         Format
+  quantity       Int
+  unitPriceCents Int
+
+  order          Order      @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  bookFormat     BookFormat @relation(fields: [bookId, format], references: [bookId, format], onDelete: Restrict)
+
+  @@id([orderId, bookId, format])
+  @@index([orderId])
+}
