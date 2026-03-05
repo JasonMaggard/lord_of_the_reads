@@ -11,7 +11,8 @@ export class ReviewsResolver {
     @Args('userId', { type: () => String }) userId: string,
     @Args('bookId', { type: () => String }) bookId: string,
     @Args('rating', { type: () => Int }) rating: number,
+    @Args('text', { type: () => String }) text: string,
   ) {
-    return this.reviewsService.createReview({ userId, bookId, rating });
+    return this.reviewsService.createReview({ userId, bookId, rating, text });
   }
 }

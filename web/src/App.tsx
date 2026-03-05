@@ -9,11 +9,14 @@ import {
   Card,
   Group,
   Loader,
+  Modal,
   NumberInput,
   Pagination,
+  Rating,
   Select,
   Stack,
   Text,
+  Textarea,
   TextInput,
   Title,
 } from '@mantine/core';
@@ -59,6 +62,16 @@ const CHECKOUT_MUTATION = gql`
   }
 `;
 
+const CREATE_REVIEW_MUTATION = gql`
+  mutation CreateReview($userId: String!, $bookId: String!, $rating: Int!, $text: String!) {
+    createReview(userId: $userId, bookId: $bookId, rating: $rating, text: $text) {
+      id
+      rating
+      text
+    }
+  }
+`;
+
 type Book = {
   id: string;
   title: string;
@@ -87,6 +100,9 @@ function App() {
   const [checkoutFormat, setCheckoutFormat] = useState('SOFTCOVER');
   const [checkoutQty, setCheckoutQty] = useState(1);
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
+  const [reviewModalOpen, setReviewModalOpen] = useState(false);
+  const [reviewRating, setReviewRating] = useState(5);
+  const [reviewText, setReviewText] = useState('');
 
   const [bookSearch] = useDebouncedValue(bookSearchInput, 250);
   const [userSearch] = useDebouncedValue(userSearchInput, 250);
@@ -117,6 +133,9 @@ function App() {
   const [checkout, { data: checkoutData, loading: checkoutLoading, error: checkoutError }] =
     useMutation<{ checkout: { id: string } }>(CHECKOUT_MUTATION);
 
+  const [createReview, { data: reviewData, loading: reviewLoading, error: reviewError }] =
+    useMutation<{ createReview: { id: string } }>(CREATE_REVIEW_MUTATION);
+
   const books = booksData?.books ?? [];
   const users = usersData?.users ?? [];
 
@@ -127,11 +146,58 @@ function App() {
 
   const canAddToCart = !!selectedBook && checkoutQty > 0 && !!checkoutFormat;
   const canCheckout = !!selectedUserId && cartItems.length > 0;
+  const canReview = !!selectedUserId && !!selectedBook;
 
   return (
     <Box maw={1200} mx="auto" p="md">
       <Stack gap="md">
         <Title order={2}>Lord of the Reads</Title>
+
+        <Modal
+          opened={reviewModalOpen}
+          onClose={() => setReviewModalOpen(false)}
+          title="Create review"
+          centered
+        >
+          <Stack>
+            <Rating value={reviewRating} onChange={setReviewRating} count={5} />
+            <Textarea
+              label="Review text"
+              placeholder="Share your thoughts about this book"
+              value={reviewText}
+              minRows={4}
+              onChange={(event) => setReviewText(event.currentTarget.value)}
+            />
+            {reviewError && <Alert color="red">{reviewError.message}</Alert>}
+            <Group justify="flex-end">
+              <Button
+                loading={reviewLoading}
+                disabled={!canReview || reviewRating < 1 || reviewRating > 5 || !reviewText.trim()}
+                onClick={async () => {
+                  if (!selectedBook || !selectedUserId) {
+                    return;
+                  }
+
+                  await createReview({
+                    variables: {
+                      userId: selectedUserId,
+                      bookId: selectedBook.id,
+                      rating: reviewRating,
+                      text: reviewText,
+                    },
+                  });
+
+                  setReviewModalOpen(false);
+                  setReviewText('');
+                  setReviewRating(5);
+                  await refetchBooks();
+                }}
+              >
+                Submit review
+              </Button>
+            </Group>
+          </Stack>
+        </Modal>
 
         <Card withBorder>
           <Stack>
@@ -243,6 +309,14 @@ function App() {
 
             <Group>
               <Button
+                variant="default"
+                disabled={!canReview}
+                onClick={() => setReviewModalOpen(true)}
+              >
+                Review
+              </Button>
+
+              <Button
                 variant="light"
                 disabled={!canAddToCart}
                 onClick={() => {
@@ -349,6 +423,7 @@ function App() {
             {checkoutData?.checkout?.id && (
               <Alert color="green">Order created: {checkoutData.checkout.id}</Alert>
             )}
+            {reviewData?.createReview?.id && <Alert color="green">Review created.</Alert>}
           </Stack>
         </Card>
       </Stack>

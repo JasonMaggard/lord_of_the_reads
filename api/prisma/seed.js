@@ -130,6 +130,7 @@ function buildReviews(books, users) {
         userId: users[userIndex].id,
         bookId: book.id,
         rating: ((userIndex + offset) % 5) + 1,
+        text: `Review from ${users[userIndex].name} for ${book.title}`,
       });
     }
   }

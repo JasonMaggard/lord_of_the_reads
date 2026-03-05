@@ -15,6 +15,9 @@ export class ReviewModel {
   @Field(() => Int)
   rating!: number;
 
+  @Field()
+  text!: string;
+
   @Field(() => GraphQLISODateTime)
   createdAt!: Date;
 }

@@ -12,8 +12,8 @@
 ## Current Snapshot
 
 - Date: 2026-03-05
-- Active phase: Phase 11 implementation complete (awaiting manual review)
-- Overall status: In progress (Phases 1-11 implemented)
+- Active phase: Phase 12 implementation complete (awaiting manual review)
+- Overall status: In progress (Phases 1-12 implemented)
 
 ---
 
@@ -434,3 +434,42 @@ Lessons learned:
 
 Next step:
 - Manual UX verification of multi-item checkout flow, then commit approved Phase 11 change.
+
+### Phase 12 — Review creation modal with stars and text
+
+Status: ✅ Implemented (pending manual review)
+
+Completed work:
+- Extended review data model to include review text:
+	- added `Review.text` in Prisma schema
+	- added migration with backfill + non-empty DB constraint
+	- updated seed data to provide deterministic review text
+- Extended GraphQL review mutation shape:
+	- `createReview(userId, bookId, rating, text)`
+	- review model now exposes `text`
+	- service validation enforces rating bounds and non-empty/max-length text
+- Added frontend review UX in `web/src/App.tsx`:
+	- `Review` button enabled when user + book are selected
+	- Mantine modal for review creation
+	- 1–5 star `Rating` input
+	- text entry via `Textarea`
+	- submit mutation and success/error feedback
+
+Manual checks run (Docker only):
+- `POSTGRES_PORT=5433 docker compose exec api npx prisma migrate deploy` (passes)
+- `POSTGRES_PORT=5433 docker compose exec api npx prisma generate` (passes)
+- `POSTGRES_PORT=5433 docker compose exec api npm run build` (passes)
+- `POSTGRES_PORT=5433 docker compose exec web npm run test` (passes)
+- `POSTGRES_PORT=5433 docker compose exec web npm run build` (passes)
+
+Deviations from initial plan:
+- Review text is now persisted and validated at API/DB layers (broader than original rating-only mutation scope).
+
+Errors made / issues encountered:
+- API build initially failed until Prisma client was regenerated after schema updates.
+
+Lessons learned:
+- For Prisma schema changes in this Docker flow, regenerate client before TypeScript build to keep generated types synchronized.
+
+Next step:
+- Manual UI verification of review modal flow and duplicate-review behavior, then commit approved Phase 12 changes.
