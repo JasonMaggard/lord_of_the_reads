@@ -13,9 +13,21 @@ export type BookReviewStats = {
   reviewMean: number;
 };
 
+const EMPTY_BOOK_REVIEW_STATS: BookReviewStats = {
+  reviewCount: 0,
+  reviewMean: 0,
+};
+
 @Injectable()
 export class BooksService {
   constructor(private readonly prisma: PrismaService) {}
+
+  private mapReviewStatsRow(row: ReviewStatsRow): BookReviewStats {
+    return {
+      reviewCount: Number(row.reviewCount),
+      reviewMean: Number(Number(row.reviewMean).toFixed(1)),
+    };
+  }
 
   private buildBookWhere(search?: string, genreId?: string): Prisma.BookWhereInput | undefined {
     if (!search && !genreId) {
@@ -77,14 +89,19 @@ export class BooksService {
     `;
 
     return new Map(
-      rows.map((row) => [
-        row.bookId,
-        {
-          reviewCount: Number(row.reviewCount),
-          reviewMean: Number(Number(row.reviewMean).toFixed(1)),
-        },
-      ]),
+      rows.map((row) => [row.bookId, this.mapReviewStatsRow(row)]),
     );
+  }
+
+  async getReviewStatsForBook(bookId: string): Promise<BookReviewStats> {
+    const rows = await this.prisma.$queryRaw<ReviewStatsRow[]>`
+      SELECT "bookId", "reviewCount", "reviewMean"
+      FROM "book_review_stats"
+      WHERE "bookId" = ${bookId}
+      LIMIT 1
+    `;
+
+    return rows.length > 0 ? this.mapReviewStatsRow(rows[0]) : EMPTY_BOOK_REVIEW_STATS;
   }
 
   async findMany(params: { limit: number; offset: number; search?: string; genreId?: string }) {
