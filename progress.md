@@ -12,8 +12,8 @@
 ## Current Snapshot
 
 - Date: 2026-03-04
-- Active phase: Phase 5 complete
-- Overall status: In progress (Phase 6 not started)
+- Active phase: Phase 6 complete
+- Overall status: In progress (Phase 7 not started)
 
 ---
 
@@ -206,3 +206,39 @@ Lessons learned:
 
 Next step:
 - Start Phase 6: immutable reviews + aggregate view wiring in GraphQL.
+
+### Phase 6 — Immutable reviews + aggregate view wiring
+
+Status: ✅ Completed
+
+Completed work:
+- Added migration creating DB view `book_review_stats` with `reviewCount` and `reviewMean` grouped by `bookId`.
+- Added GraphQL mutation `createReview(userId, bookId, rating)`.
+- Implemented review creation service with:
+	- rating validation (`1..5` integer)
+	- duplicate prevention handling via unique constraint conflict mapping
+- Added `reviewCount` and `reviewMean` fields to `BookModel`.
+- Wired book read paths to fetch aggregate stats from `book_review_stats` and return 1-decimal mean.
+- Added `ReviewsModule` to application module graph.
+
+Manual checks run:
+- `DATABASE_URL=... npx prisma migrate dev` (applied view migration).
+- `npm run build` in `api` (passes).
+- GraphQL mutation test:
+	- create review succeeds once.
+	- duplicate create for same `(userId, bookId)` fails.
+- GraphQL book query test confirms aggregate fields are populated:
+	- `{ book(id: "book_0002") { id reviewCount reviewMean } }`
+
+Deviations from initial plan:
+- Duplicate review conflict currently surfaces GraphQL error with HTTP conflict details in extensions rather than a custom domain error code.
+
+Errors made / issues encountered:
+- None blocking in implementation; duplicate prevention behavior validated through DB uniqueness and error mapping.
+
+Lessons learned:
+- DB-view-backed aggregates are straightforward to wire for read paths while preserving strong write consistency.
+- Unique index + service-level conflict mapping gives clear immutable review behavior with minimal code.
+
+Next step:
+- Start Phase 7: checkout and order price memoization flow.
