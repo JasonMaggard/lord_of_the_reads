@@ -12,8 +12,8 @@
 ## Current Snapshot
 
 - Date: 2026-03-04
-- Active phase: Phase 7 complete
-- Overall status: In progress (Phase 8 not started)
+- Active phase: Phase 9 implementation complete (awaiting manual review)
+- Overall status: In progress (Phases 1-9 implemented)
 
 ---
 
@@ -281,3 +281,79 @@ Lessons learned:
 
 Next step:
 - Start Phase 8: frontend thin vertical slice (Mantine) for book list/detail, user selector, and checkout path.
+
+### Phase 8 — Frontend thin vertical slice (Mantine + Apollo)
+
+Status: ✅ Implemented (pending manual review)
+
+Completed work:
+- Installed frontend data/UI dependencies:
+	- `@apollo/client`, `graphql`
+	- `@mantine/core`, `@mantine/hooks`, `@mantine/carousel`, `embla-carousel-react`
+- Replaced Vite starter app with a minimal vertical slice in `web/src/App.tsx`:
+	- current user selector with search
+	- searchable book shelf (title/author) backed by GraphQL
+	- paginated book browsing UI
+	- selected book detail panel
+	- checkout action (`checkout` mutation) with format + quantity input
+	- success/error feedback for checkout submission
+- Wired global providers in `web/src/main.tsx`:
+	- Apollo client against `VITE_GRAPHQL_URL` (fallback `http://localhost:3000/graphql`)
+	- Mantine provider and required global styles
+- Simplified base CSS in `web/src/index.css` to remove conflicting Vite starter defaults.
+
+Manual checks run:
+- `npm run build` in `web` (passes).
+
+Deviations from initial plan:
+- UI currently uses simple fixed pagination control (`total=20`) as a minimal Phase 8 implementation because backend read API does not yet return total counts.
+
+Errors made / issues encountered:
+- Initial build failed due to Apollo Client v4 import/API changes; resolved by using:
+	- `@apollo/client/core` for client primitives
+	- `@apollo/client/react` for React hooks/provider.
+- Initial carousel props included unsupported `align`; removed for compatibility.
+
+Lessons learned:
+- Apollo Client v4 split entrypoints should be used explicitly to avoid type/runtime drift from older examples.
+- Mantine provides enough primitives to keep this vertical slice thin without custom component overhead.
+
+Next step:
+- Run manual UI walkthrough against live API data, then adjust UX edge behavior before Phase 8 commit.
+
+### Phase 9 — Logging, health, and error clarity
+
+Status: ✅ Implemented (pending manual review)
+
+Completed work:
+- Enabled structured API logging with `nestjs-pino`:
+	- configured `LoggerModule.forRoot` in `api/src/app.module.ts`
+	- pretty local output via `pino-pretty` outside production
+	- request-level correlation field support via `x-correlation-id`
+- Wired Nest bootstrap logger in `api/src/main.ts` with buffered startup logs.
+- Added readiness endpoint `GET /health` in `api/src/app.controller.ts` and `api/src/app.service.ts`.
+- Normalized GraphQL error formatting in `api/src/app.module.ts`:
+	- stable extension `code`
+	- optional `statusCode` when available
+	- readable message fallback behavior
+	- mapped common HTTP statuses to deterministic GraphQL codes.
+
+Manual checks run:
+- `npm run build` in `api` (passes).
+- Runtime check on local API instance (`PORT=3001`):
+	- `GET /health` returns readiness payload with `status=ok`.
+	- invalid GraphQL query returns consistent error shape with readable message and code (`GRAPHQL_VALIDATION_FAILED`).
+
+Deviations from initial plan:
+- Health endpoint currently reports service readiness (process uptime/timestamp) and does not perform active DB connectivity probing.
+
+Errors made / issues encountered:
+- Initial GraphQL formatter version over-normalized errors and dropped useful detail in one runtime path.
+- Formatter was revised to preserve readable message fallback and improve code/status derivation.
+
+Lessons learned:
+- Apollo/Nest formatter hooks should preserve standard GraphQL validation codes while normalizing application errors.
+- `nestjs-pino` integration is most reliable when logger is wired in both module config and bootstrap (`app.useLogger`).
+
+Next step:
+- Manual review of Phase 9 behavior, then commit approved Phase 8 + Phase 9 changes.

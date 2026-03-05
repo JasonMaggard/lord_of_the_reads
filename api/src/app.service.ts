@@ -5,4 +5,13 @@ export class AppService {
   getHello(): string {
     return 'Hello World!';
   }
+
+  getHealth() {
+    return {
+      status: 'ok',
+      service: 'lord-of-the-reads-api',
+      uptimeSeconds: Math.floor(process.uptime()),
+      timestamp: new Date().toISOString(),
+    };
+  }
 }
