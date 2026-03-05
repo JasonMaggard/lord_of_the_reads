@@ -12,8 +12,8 @@
 ## Current Snapshot
 
 - Date: 2026-03-05
-- Active phase: Phase 12 implementation complete (awaiting manual review)
-- Overall status: In progress (Phases 1-12 implemented)
+- Active phase: Phase 13 implementation complete (awaiting manual review)
+- Overall status: In progress (Phases 1-13 implemented)
 
 ---
 
@@ -473,3 +473,38 @@ Lessons learned:
 
 Next step:
 - Manual UI verification of review modal flow and duplicate-review behavior, then commit approved Phase 12 changes.
+
+### Phase 13 — Lazy review stats resolution with DataLoader
+
+Status: ✅ Implemented (pending manual review)
+
+Completed work:
+- Refactored `books` read path to stop eagerly calculating `reviewCount` and `reviewMean` in `BooksService`.
+- Added request-scoped DataLoader `BookReviewStatsLoader` to batch and cache review-stats lookups per request.
+- Added `@ResolveField` implementations in `BooksResolver` for:
+	- `reviewCount`
+	- `reviewMean`
+- Registered DataLoader provider in `BooksModule`.
+- Added `dataloader` package to API dependencies.
+- Performed minor type-safe cleanup:
+	- consolidated GraphQL import in `review.model.ts`
+	- removed inline Prisma create literal in reviews service to avoid excess-property diagnostic noise.
+
+Manual checks run:
+- Local `api`: `npm run build` (passes)
+- Docker `api`: `POSTGRES_PORT=5433 docker compose exec api npm install` (passes)
+- Docker `api`: `POSTGRES_PORT=5433 docker compose exec api npm run build` (passes)
+- Docker `api`: `POSTGRES_PORT=5433 docker compose exec api npm run test:e2e` (passes)
+- Workspace diagnostics check: no remaining TypeScript errors.
+
+Deviations from initial plan:
+- No schema/API contract change for books query shape; implementation detail changed from eager service fetch to lazy resolver-based fetch.
+
+Errors made / issues encountered:
+- Workspace briefly showed stale diagnostics tied to generated/lockfile state; resolved via dependency refresh and Prisma client generation.
+
+Lessons learned:
+- Resolver-level DataLoader gives predictable opt-in work for expensive fields while preserving existing GraphQL contract.
+
+Next step:
+- Manual verification of books query variants (with and without review stats fields), then commit approved Phase 13 changes.

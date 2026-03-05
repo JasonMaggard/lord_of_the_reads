@@ -8,13 +8,18 @@ type ReviewStatsRow = {
   reviewMean: Prisma.Decimal;
 };
 
+export type BookReviewStats = {
+  reviewCount: number;
+  reviewMean: number;
+};
+
 @Injectable()
 export class BooksService {
   constructor(private readonly prisma: PrismaService) {}
 
-  private async getReviewStatsByBookIds(bookIds: string[]) {
+  async getReviewStatsByBookIds(bookIds: string[]): Promise<Map<string, BookReviewStats>> {
     if (bookIds.length === 0) {
-      return new Map<string, { reviewCount: number; reviewMean: number }>();
+      return new Map<string, BookReviewStats>();
     }
 
     const rows = await this.prisma.$queryRaw<ReviewStatsRow[]>`
@@ -79,23 +84,17 @@ export class BooksService {
       skip: offset,
     });
 
-    const reviewStatsByBookId = await this.getReviewStatsByBookIds(rows.map((row) => row.id));
-
     return rows.map((row) => {
-      const stats = reviewStatsByBookId.get(row.id) ?? { reviewCount: 0, reviewMean: 0 };
-
       return {
-      id: row.id,
-      title: row.title,
-      priceCents: row.priceCents,
-      publisherId: row.publisherId,
-      authors: row.bookAuthors.map((link) => ({
-        id: link.author.id,
-        name: link.author.name,
-      })),
-      reviewCount: stats.reviewCount,
-      reviewMean: stats.reviewMean,
-    };
+        id: row.id,
+        title: row.title,
+        priceCents: row.priceCents,
+        publisherId: row.publisherId,
+        authors: row.bookAuthors.map((link) => ({
+          id: link.author.id,
+          name: link.author.name,
+        })),
+      };
     });
   }
 
@@ -120,9 +119,6 @@ export class BooksService {
       return null;
     }
 
-    const statsByBookId = await this.getReviewStatsByBookIds([row.id]);
-    const stats = statsByBookId.get(row.id) ?? { reviewCount: 0, reviewMean: 0 };
-
     return {
       id: row.id,
       title: row.title,
@@ -132,8 +128,6 @@ export class BooksService {
         id: link.author.id,
         name: link.author.name,
       })),
-      reviewCount: stats.reviewCount,
-      reviewMean: stats.reviewMean,
     };
   }
 }

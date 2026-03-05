@@ -23,13 +23,15 @@ export class ReviewsService {
     }
 
     try {
+      const createData = {
+        userId,
+        bookId,
+        rating,
+        text: normalizedText,
+      };
+
       return await this.prisma.review.create({
-        data: {
-          userId,
-          bookId,
-          rating,
-          text: normalizedText,
-        },
+        data: createData,
       });
     } catch (error) {
       if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {

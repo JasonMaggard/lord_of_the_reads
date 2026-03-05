@@ -1,10 +1,14 @@
-import { Args, Int, Query, Resolver } from '@nestjs/graphql';
+import { Args, Float, Int, Parent, Query, ResolveField, Resolver } from '@nestjs/graphql';
 import { BookModel } from './book.model';
 import { BooksService } from './books.service';
+import { BookReviewStatsLoader } from './book-review-stats.loader';
 
 @Resolver(() => BookModel)
 export class BooksResolver {
-  constructor(private readonly booksService: BooksService) {}
+  constructor(
+    private readonly booksService: BooksService,
+    private readonly bookReviewStatsLoader: BookReviewStatsLoader,
+  ) {}
 
   @Query(() => [BookModel])
   async books(
@@ -26,5 +30,19 @@ export class BooksResolver {
   @Query(() => BookModel, { nullable: true })
   async book(@Args('id', { type: () => String }) id: string) {
     return this.booksService.findById(id);
+  }
+
+  @ResolveField(() => Int)
+  async reviewCount(@Parent() book: BookModel) {
+    const stats = await this.bookReviewStatsLoader.load(book.id);
+
+    return stats.reviewCount;
+  }
+
+  @ResolveField(() => Float)
+  async reviewMean(@Parent() book: BookModel) {
+    const stats = await this.bookReviewStatsLoader.load(book.id);
+
+    return stats.reviewMean;
   }
 }
