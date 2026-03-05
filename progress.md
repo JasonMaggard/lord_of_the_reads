@@ -12,8 +12,8 @@
 ## Current Snapshot
 
 - Date: 2026-03-05
-- Active phase: Phase 14 implementation complete (awaiting manual review)
-- Overall status: In progress (Phases 1-14 implemented)
+- Active phase: Phase 15 implementation complete (awaiting manual review)
+- Overall status: In progress (Phases 1-15 implemented)
 
 ---
 
@@ -546,3 +546,37 @@ Lessons learned:
 
 Next step:
 - Manual review of seeded data in UI/API and commit approved Phase 14 changes.
+
+### Phase 15 — Bookshelf genre filtering and full-page listing density
+
+Status: ✅ Implemented (pending manual review)
+
+Completed work:
+- Added backend genre filtering support for books query:
+	- `books(limit, offset, search, genreId)`
+- Added backend query for filtered total count:
+	- `booksCount(search, genreId)`
+- Added backend query for genre dropdown options:
+	- `genres()`
+- Refactored `BooksService` with shared typed where-builder for search + genre filters.
+- Updated frontend bookshelf to include a single-select genre dropdown filter.
+- Replaced carousel-only display with denser full-page grid listing (`SimpleGrid`) so all books for the current page are visible at once.
+- Increased page size to 24 and switched pagination to use real backend `booksCount` total pages.
+- Updated frontend tests for new books/genre/count query flow.
+
+Manual checks run (Docker only):
+- `POSTGRES_PORT=5433 docker compose exec api npm run build` (passes)
+- `POSTGRES_PORT=5433 docker compose exec web npm run test` (passes)
+- `POSTGRES_PORT=5433 docker compose exec web npm run build` (passes)
+
+Deviations from initial plan:
+- This extends bookshelf UX from fixed pagination total and carousel slices to true filtered pagination with full-page visibility.
+
+Errors made / issues encountered:
+- Initial Prisma where typing for case-insensitive search required literal `QueryMode` narrowing; resolved with typed literal values.
+
+Lessons learned:
+- Pairing `booksCount` with filtered list query keeps offset pagination accurate and predictable for UI controls.
+
+Next step:
+- Manual UI verification of genre filter + pagination behavior, then commit approved Phase 15 changes.

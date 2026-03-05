@@ -17,6 +17,54 @@ export type BookReviewStats = {
 export class BooksService {
   constructor(private readonly prisma: PrismaService) {}
 
+  private buildBookWhere(search?: string, genreId?: string): Prisma.BookWhereInput | undefined {
+    if (!search && !genreId) {
+      return undefined;
+    }
+
+    return {
+      AND: [
+        ...(search
+          ? [
+              {
+                OR: [
+                  {
+                    title: {
+                      contains: search,
+                      mode: 'insensitive' as const,
+                    },
+                  },
+                  {
+                    bookAuthors: {
+                      some: {
+                        author: {
+                          name: {
+                            contains: search,
+                            mode: 'insensitive' as const,
+                          },
+                        },
+                      },
+                    },
+                  },
+                ],
+              },
+            ]
+          : []),
+        ...(genreId
+          ? [
+              {
+                bookGenres: {
+                  some: {
+                    genreId,
+                  },
+                },
+              },
+            ]
+          : []),
+      ],
+    };
+  }
+
   async getReviewStatsByBookIds(bookIds: string[]): Promise<Map<string, BookReviewStats>> {
     if (bookIds.length === 0) {
       return new Map<string, BookReviewStats>();
@@ -39,34 +87,11 @@ export class BooksService {
     );
   }
 
-  async findMany(params: { limit: number; offset: number; search?: string }) {
-    const { limit, offset, search } = params;
+  async findMany(params: { limit: number; offset: number; search?: string; genreId?: string }) {
+    const { limit, offset, search, genreId } = params;
 
     const rows = await this.prisma.book.findMany({
-      where: search
-        ? {
-            OR: [
-              {
-                title: {
-                  contains: search,
-                  mode: 'insensitive',
-                },
-              },
-              {
-                bookAuthors: {
-                  some: {
-                    author: {
-                      name: {
-                        contains: search,
-                        mode: 'insensitive',
-                      },
-                    },
-                  },
-                },
-              },
-            ],
-          }
-        : undefined,
+      where: this.buildBookWhere(search, genreId),
       include: {
         bookAuthors: {
           include: {
@@ -157,5 +182,23 @@ export class BooksService {
         name: link.genre.name,
       })),
     };
+  }
+
+  async findCount(params: { search?: string; genreId?: string }) {
+    const { search, genreId } = params;
+
+    return this.prisma.book.count({
+      where: this.buildBookWhere(search, genreId),
+    });
+  }
+
+  async findGenres() {
+    return this.prisma.genre.findMany({
+      orderBy: { name: 'asc' },
+      select: {
+        id: true,
+        name: true,
+      },
+    });
   }
 }

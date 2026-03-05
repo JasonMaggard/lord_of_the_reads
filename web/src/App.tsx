@@ -14,18 +14,18 @@ import {
   Pagination,
   Rating,
   Select,
+  SimpleGrid,
   Stack,
   Text,
   Textarea,
   TextInput,
   Title,
 } from '@mantine/core';
-import { Carousel } from '@mantine/carousel';
 import { useDebouncedValue } from '@mantine/hooks';
 
 const BOOKS_QUERY = gql`
-  query Books($limit: Int, $offset: Int, $search: String) {
-    books(limit: $limit, offset: $offset, search: $search) {
+  query Books($limit: Int, $offset: Int, $search: String, $genreId: String) {
+    books(limit: $limit, offset: $offset, search: $search, genreId: $genreId) {
       id
       title
       priceCents
@@ -39,6 +39,21 @@ const BOOKS_QUERY = gql`
         id
         name
       }
+    }
+  }
+`;
+
+const BOOKS_COUNT_QUERY = gql`
+  query BooksCount($search: String, $genreId: String) {
+    booksCount(search: $search, genreId: $genreId)
+  }
+`;
+
+const GENRES_QUERY = gql`
+  query Genres {
+    genres {
+      id
+      name
     }
   }
 `;
@@ -87,6 +102,7 @@ type Book = {
 };
 
 type User = { id: string; name: string };
+type Genre = { id: string; name: string };
 type CartItem = {
   bookId: string;
   title: string;
@@ -94,12 +110,13 @@ type CartItem = {
   quantity: number;
 };
 
-const PAGE_SIZE = 12;
+const PAGE_SIZE = 24;
 
 function App() {
   const [bookSearchInput, setBookSearchInput] = useState('');
   const [userSearchInput, setUserSearchInput] = useState('');
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
+  const [selectedGenreId, setSelectedGenreId] = useState<string | null>(null);
   const [selectedBook, setSelectedBook] = useState<Book | null>(null);
   const [page, setPage] = useState(1);
   const [checkoutFormat, setCheckoutFormat] = useState('SOFTCOVER');
@@ -122,7 +139,20 @@ function App() {
       limit: PAGE_SIZE,
       offset: (page - 1) * PAGE_SIZE,
       search: bookSearch.trim() || undefined,
+      genreId: selectedGenreId || undefined,
     },
+    fetchPolicy: 'cache-and-network',
+  });
+
+  const { data: booksCountData } = useQuery<{ booksCount: number }>(BOOKS_COUNT_QUERY, {
+    variables: {
+      search: bookSearch.trim() || undefined,
+      genreId: selectedGenreId || undefined,
+    },
+    fetchPolicy: 'cache-and-network',
+  });
+
+  const { data: genresData } = useQuery<{ genres: Genre[] }>(GENRES_QUERY, {
     fetchPolicy: 'cache-and-network',
   });
 
@@ -143,10 +173,19 @@ function App() {
 
   const books = booksData?.books ?? [];
   const users = usersData?.users ?? [];
+  const genres = genresData?.genres ?? [];
+  const booksCount = booksCountData?.booksCount ?? 0;
+
+  const totalPages = Math.max(1, Math.ceil(booksCount / PAGE_SIZE));
 
   const userOptions = useMemo(
     () => users.map((user) => ({ value: user.id, label: `${user.name} (${user.id})` })),
     [users],
+  );
+
+  const genreOptions = useMemo(
+    () => genres.map((genre) => ({ value: genre.id, label: genre.name })),
+    [genres],
   );
 
   const canAddToCart = !!selectedBook && checkoutQty > 0 && !!checkoutFormat;
@@ -229,15 +268,28 @@ function App() {
           <Stack>
             <Group justify="space-between">
               <Title order={4}>Bookshelf</Title>
-              <TextInput
-                placeholder="Search title or author"
-                value={bookSearchInput}
-                onChange={(event) => {
-                  setBookSearchInput(event.currentTarget.value);
-                  setPage(1);
-                }}
-                w={320}
-              />
+              <Group>
+                <Select
+                  placeholder="Filter by genre"
+                  data={genreOptions}
+                  clearable
+                  value={selectedGenreId}
+                  onChange={(value) => {
+                    setSelectedGenreId(value);
+                    setPage(1);
+                  }}
+                  w={240}
+                />
+                <TextInput
+                  placeholder="Search title or author"
+                  value={bookSearchInput}
+                  onChange={(event) => {
+                    setBookSearchInput(event.currentTarget.value);
+                    setPage(1);
+                  }}
+                  w={320}
+                />
+              </Group>
             </Group>
 
             {booksError && <Alert color="red">Failed to load books.</Alert>}
@@ -246,39 +298,38 @@ function App() {
               <Loader />
             ) : (
               <>
-                <Carousel slideSize={{ base: '100%', sm: '50%', md: '33.333333%' }} slideGap="md">
+                <SimpleGrid cols={{ base: 1, sm: 2, md: 3, lg: 4 }} spacing="md">
                   {books.map((book) => (
-                    <Carousel.Slide key={book.id}>
-                      <Card
-                        withBorder
-                        h="100%"
-                        style={{
-                          borderColor:
-                            selectedBook?.id === book.id ? 'var(--mantine-color-blue-4)' : undefined,
-                        }}
-                      >
-                        <Stack gap="xs">
-                          <Group justify="space-between">
-                            <Text fw={600}>{book.title}</Text>
-                            <Badge>${(book.priceCents / 100).toFixed(2)}</Badge>
-                          </Group>
-                          <Text size="sm" c="dimmed">
-                            {book.authors.map((author) => author.name).join(', ')}
-                          </Text>
-                          <Text size="sm" c="dimmed">
-                            Genres: {book.genres.map((genre) => genre.name).join(', ')}
-                          </Text>
-                          <Text size="sm">Rating: {book.reviewMean.toFixed(1)} ({book.reviewCount})</Text>
-                          <Button size="xs" variant="light" onClick={() => setSelectedBook(book)}>
-                            Select
-                          </Button>
-                        </Stack>
-                      </Card>
-                    </Carousel.Slide>
+                    <Card
+                      key={book.id}
+                      withBorder
+                      h="100%"
+                      style={{
+                        borderColor:
+                          selectedBook?.id === book.id ? 'var(--mantine-color-blue-4)' : undefined,
+                      }}
+                    >
+                      <Stack gap="xs">
+                        <Group justify="space-between">
+                          <Text fw={600}>{book.title}</Text>
+                          <Badge>${(book.priceCents / 100).toFixed(2)}</Badge>
+                        </Group>
+                        <Text size="sm" c="dimmed">
+                          {book.authors.map((author) => author.name).join(', ')}
+                        </Text>
+                        <Text size="sm" c="dimmed">
+                          Genres: {book.genres.map((genre) => genre.name).join(', ')}
+                        </Text>
+                        <Text size="sm">Rating: {book.reviewMean.toFixed(1)} ({book.reviewCount})</Text>
+                        <Button size="xs" variant="light" onClick={() => setSelectedBook(book)}>
+                          Select
+                        </Button>
+                      </Stack>
+                    </Card>
                   ))}
-                </Carousel>
+                </SimpleGrid>
                 <Group justify="center">
-                  <Pagination value={page} onChange={setPage} total={20} />
+                  <Pagination value={Math.min(page, totalPages)} onChange={setPage} total={totalPages} />
                 </Group>
               </>
             )}

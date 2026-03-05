@@ -48,7 +48,9 @@ describe('App', () => {
     mockedUseMutation.mockReset();
 
     mockedUseQuery.mockImplementation((query: unknown) => {
-      if (String(query).includes('query Books')) {
+      const queryText = String(query);
+
+      if (queryText.includes('query Books(')) {
         return {
           data: {
             books: [
@@ -66,6 +68,26 @@ describe('App', () => {
           loading: false,
           error: undefined,
           refetch: vi.fn(),
+        } as never;
+      }
+
+      if (queryText.includes('query BooksCount')) {
+        return {
+          data: {
+            booksCount: 1,
+          },
+          loading: false,
+          error: undefined,
+        } as never;
+      }
+
+      if (queryText.includes('query Genres')) {
+        return {
+          data: {
+            genres: [{ id: 'genre_1', name: 'Fiction' }],
+          },
+          loading: false,
+          error: undefined,
         } as never;
       }
 
@@ -94,6 +116,7 @@ describe('App', () => {
     expect(screen.getByText('Lord of the Reads')).toBeInTheDocument();
     expect(screen.getByText('Book 1')).toBeInTheDocument();
     expect(screen.getByText('Author 1')).toBeInTheDocument();
+    expect(screen.getByText('Genres: Fiction')).toBeInTheDocument();
   });
 
   it('shows checkout disabled until required selections are present', () => {
