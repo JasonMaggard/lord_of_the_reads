@@ -12,8 +12,8 @@
 ## Current Snapshot
 
 - Date: 2026-03-04
-- Active phase: Phase 2 complete
-- Overall status: In progress (Phase 3 not started)
+- Active phase: Phase 3 complete
+- Overall status: In progress (Phase 4 not started)
 
 ---
 
@@ -91,3 +91,49 @@ Lessons learned:
 
 Next step:
 - Start Phase 3: deterministic seed data for relational realism and repeatable local testing.
+
+### Phase 3 — Seed data and query realism baseline
+
+Status: ✅ Completed
+
+Completed work:
+- Added deterministic seed script in `api/prisma/seed.js`.
+- Seed covers all core entities and joins with realistic relational distribution:
+	- publishers, authors, genres, users, books
+	- book-author, book-genre, book-format
+	- reviews (1..5 rating)
+	- orders and order items with format + unit price memoization
+- Configured Prisma 7 seed command in `api/prisma.config.ts`.
+- Added DB seed script entry in `api/package.json`.
+- Installed Prisma 7 Postgres adapter and updated seed runtime to adapter-based PrismaClient initialization.
+
+Manual checks run:
+- `DATABASE_URL=... npx prisma generate`
+- `DATABASE_URL=... npm run db:seed` (run #1)
+- Count verification query via `psql` for key tables.
+- `DATABASE_URL=... npm run db:seed` (run #2)
+- Count verification query repeated; row counts match exactly across runs.
+
+Determinism verification result:
+- `authors=80`
+- `books=120`
+- `genres=10`
+- `publishers=12`
+- `users=140`
+- `reviews=840`
+- `orders=180`
+- `order_items=360`
+
+Deviations from initial plan:
+- Used Prisma 7 adapter-based runtime in seed script (`@prisma/adapter-pg`) instead of legacy direct client URL behavior.
+
+Errors made / issues encountered:
+- Seed initially failed because Prisma 7 requires adapter-based PrismaClient runtime configuration.
+- Temporary attempt to add `datasource.url` in schema caused a Prisma validation error (unsupported in Prisma 7 schema config model).
+
+Lessons learned:
+- For Prisma 7, keep datasource URL in `prisma.config.ts` and use adapters for runtime clients.
+- Validate seed flow with two consecutive runs and SQL count checks to confirm deterministic behavior.
+
+Next step:
+- Start Phase 4: GraphQL API foundation (books/users read paths) with dev-only Playground and introspection.
