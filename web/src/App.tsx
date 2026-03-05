@@ -35,6 +35,10 @@ const BOOKS_QUERY = gql`
         id
         name
       }
+      genres {
+        id
+        name
+      }
     }
   }
 `;
@@ -79,6 +83,7 @@ type Book = {
   reviewCount: number;
   reviewMean: number;
   authors: Array<{ id: string; name: string }>;
+  genres: Array<{ id: string; name: string }>;
 };
 
 type User = { id: string; name: string };
@@ -259,6 +264,9 @@ function App() {
                           </Group>
                           <Text size="sm" c="dimmed">
                             {book.authors.map((author) => author.name).join(', ')}
+                          </Text>
+                          <Text size="sm" c="dimmed">
+                            Genres: {book.genres.map((genre) => genre.name).join(', ')}
                           </Text>
                           <Text size="sm">Rating: {book.reviewMean.toFixed(1)} ({book.reviewCount})</Text>
                           <Button size="xs" variant="light" onClick={() => setSelectedBook(book)}>

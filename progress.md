@@ -12,8 +12,8 @@
 ## Current Snapshot
 
 - Date: 2026-03-05
-- Active phase: Phase 13 implementation complete (awaiting manual review)
-- Overall status: In progress (Phases 1-13 implemented)
+- Active phase: Phase 14 implementation complete (awaiting manual review)
+- Overall status: In progress (Phases 1-14 implemented)
 
 ---
 
@@ -508,3 +508,41 @@ Lessons learned:
 
 Next step:
 - Manual verification of books query variants (with and without review stats fields), then commit approved Phase 13 changes.
+
+### Phase 14 — Genre catalog normalization and seeded assignment coverage
+
+Status: ✅ Implemented (pending manual review)
+
+Completed work:
+- Updated canonical seed genre list in `api/prisma/seed.js` to exactly:
+	- Fiction
+	- Non-Fiction
+	- DIY
+	- Self-Help
+	- Comedy
+	- Horror
+	- Drama
+	- Sci-Fi
+	- Fantasy
+	- Romance
+	- Literature
+- Re-seeded database from Dockerized API workflow.
+- Preserved existing one-or-more book genre assignment behavior in seed generation.
+
+Manual checks run (Docker only):
+- `POSTGRES_PORT=5433 docker compose exec api npm run db:seed` (passes)
+- SQL validation of `Genre` names from Postgres (11 expected rows found)
+- SQL validation for unassigned books:
+	- `books_without_genres = 0`
+
+Deviations from initial plan:
+- None; this is a targeted data-catalog and seed-content update.
+
+Errors made / issues encountered:
+- None blocking.
+
+Lessons learned:
+- Keeping genre catalog deterministic in seed data allows clean catalog evolution without schema changes.
+
+Next step:
+- Manual review of seeded data in UI/API and commit approved Phase 14 changes.

@@ -78,6 +78,16 @@ export class BooksService {
             },
           },
         },
+        bookGenres: {
+          include: {
+            genre: {
+              select: {
+                id: true,
+                name: true,
+              },
+            },
+          },
+        },
       },
       orderBy: [{ title: 'asc' }, { id: 'asc' }],
       take: limit,
@@ -94,6 +104,10 @@ export class BooksService {
           id: link.author.id,
           name: link.author.name,
         })),
+        genres: row.bookGenres.map((link) => ({
+          id: link.genre.id,
+          name: link.genre.name,
+        })),
       };
     });
   }
@@ -105,6 +119,16 @@ export class BooksService {
         bookAuthors: {
           include: {
             author: {
+              select: {
+                id: true,
+                name: true,
+              },
+            },
+          },
+        },
+        bookGenres: {
+          include: {
+            genre: {
               select: {
                 id: true,
                 name: true,
@@ -127,6 +151,10 @@ export class BooksService {
       authors: row.bookAuthors.map((link) => ({
         id: link.author.id,
         name: link.author.name,
+      })),
+      genres: row.bookGenres.map((link) => ({
+        id: link.genre.id,
+        name: link.genre.name,
       })),
     };
   }

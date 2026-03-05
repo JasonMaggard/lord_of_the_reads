@@ -59,6 +59,7 @@ describe('App', () => {
                 reviewCount: 3,
                 reviewMean: 4.2,
                 authors: [{ id: 'author_1', name: 'Author 1' }],
+                genres: [{ id: 'genre_1', name: 'Fiction' }],
               },
             ],
           },

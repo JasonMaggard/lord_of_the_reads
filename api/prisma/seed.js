@@ -21,16 +21,17 @@ const PUBLISHER_COUNT = 12;
 const USER_COUNT = 140;
 
 const GENRES = [
-  'Fantasy',
-  'Science Fiction',
-  'Mystery',
-  'Thriller',
-  'Romance',
-  'Historical Fiction',
+  'Fiction',
+  'Non-Fiction',
+  'DIY',
+  'Self-Help',
+  'Comedy',
   'Horror',
-  'Biography',
-  'Young Adult',
-  'Nonfiction',
+  'Drama',
+  'Sci-Fi',
+  'Fantasy',
+  'Romance',
+  'Literature',
 ];
 
 const FORMAT_ROTATIONS = [
