@@ -12,8 +12,8 @@
 ## Current Snapshot
 
 - Date: 2026-03-04
-- Active phase: Phase 3 complete
-- Overall status: In progress (Phase 4 not started)
+- Active phase: Phase 4 complete
+- Overall status: In progress (Phase 5 not started)
 
 ---
 
@@ -137,3 +137,37 @@ Lessons learned:
 
 Next step:
 - Start Phase 4: GraphQL API foundation (books/users read paths) with dev-only Playground and introspection.
+
+### Phase 4 — GraphQL API foundation (books/users read paths)
+
+Status: ✅ Completed
+
+Completed work:
+- Added GraphQL setup in Nest app with Apollo driver and code-first schema generation.
+- Enabled GraphQL Playground and introspection in development mode only.
+- Added Prisma runtime module/service with Prisma 7 adapter-based DB connectivity.
+- Implemented thin read-path resolvers/services for:
+	- `books(limit, offset, search)`
+	- `book(id)`
+	- `users(search, limit, offset)`
+- Added safe pagination limits and stable ordering in read services.
+
+Manual checks run:
+- `npm run build` in `api` (passes).
+- Booted API with local `DATABASE_URL` and executed GraphQL query:
+	- `{ books(limit: 2) { id title } users(limit: 2) { id name } }`
+- Verified successful GraphQL response with seeded data.
+
+Deviations from initial plan:
+- None in scope; Phase 4 goals completed as planned.
+
+Errors made / issues encountered:
+- Runtime initially failed due to missing `@as-integrations/express5` package required by Nest + Apollo 5.
+- A local port conflict (`3000`) occurred because compose-managed API was still running.
+
+Lessons learned:
+- With Nest GraphQL + Apollo 5, ensure `@as-integrations/express5` is installed.
+- Stop compose API/web before local API smoke tests to avoid false negatives from port collisions.
+
+Next step:
+- Start Phase 5: unified title+author search and pagination hardening.
