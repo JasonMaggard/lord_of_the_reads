@@ -13,12 +13,13 @@ export class BooksResolver {
     @Args('search', { type: () => String, nullable: true }) search?: string,
   ) {
     const safeLimit = Math.min(Math.max(limit ?? 20, 1), 50);
-    const safeOffset = Math.max(offset ?? 0, 0);
+    const safeOffset = Math.min(Math.max(offset ?? 0, 0), 10_000);
+    const normalizedSearch = search?.trim().slice(0, 100) || undefined;
 
     return this.booksService.findMany({
       limit: safeLimit,
       offset: safeOffset,
-      search: search?.trim() || undefined,
+      search: normalizedSearch,
     });
   }
 

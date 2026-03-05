@@ -12,8 +12,8 @@
 ## Current Snapshot
 
 - Date: 2026-03-04
-- Active phase: Phase 4 complete
-- Overall status: In progress (Phase 5 not started)
+- Active phase: Phase 5 complete
+- Overall status: In progress (Phase 6 not started)
 
 ---
 
@@ -171,3 +171,38 @@ Lessons learned:
 
 Next step:
 - Start Phase 5: unified title+author search and pagination hardening.
+
+### Phase 5 — Unified search and pagination hardening
+
+Status: ✅ Completed
+
+Completed work:
+- Implemented unified book search across both:
+	- `Book.title`
+	- related `Author.name`
+- Extended `BookModel` GraphQL type to include `authors` projection.
+- Updated books read service to use relation-aware includes and map authors in one query path.
+- Hardened pagination/search inputs in resolver:
+	- bounded `limit` (existing)
+	- bounded `offset` (max 10,000)
+	- normalized/capped search input length.
+
+Manual checks run:
+- `npm run build` in `api` (passes).
+- Booted API with local DB URL and executed GraphQL query:
+	- `{ books(limit: 2, search: "Author 7") { id title authors { id name } } }`
+- Verified non-empty results and author projection in response.
+
+Deviations from initial plan:
+- Used relation `include` strategy for author projection to keep resolver/service simple rather than adding DataLoader this phase.
+
+Errors made / issues encountered:
+- Initial runtime checks hit stale process/port collision (`3000`) and queried an old schema instance.
+- First validation query failed due to targeting the stale API process before cleanup.
+
+Lessons learned:
+- Always check/clear existing listeners on `3000` before manual API verification.
+- For this scope, relation-aware includes provide clear behavior without introducing extra caching/batching layers.
+
+Next step:
+- Start Phase 6: immutable reviews + aggregate view wiring in GraphQL.

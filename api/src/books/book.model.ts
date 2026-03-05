@@ -1,4 +1,5 @@
 import { Field, ID, Int, ObjectType } from '@nestjs/graphql';
+import { AuthorSummaryModel } from './author-summary.model';
 
 @ObjectType()
 export class BookModel {
@@ -13,4 +14,7 @@ export class BookModel {
 
   @Field()
   publisherId!: string;
+
+  @Field(() => [AuthorSummaryModel])
+  authors!: AuthorSummaryModel[];
 }
