@@ -20,12 +20,12 @@ erDiagram
 
   Publisher {
     string id PK
-    string name UNIQUE
+    string name UK
   }
 
   Genre {
     string id PK
-    string name UNIQUE
+    string name UK
   }
 
   User {
@@ -34,17 +34,17 @@ erDiagram
   }
 
   BookAuthor {
-    string bookId PK,FK
-    string authorId PK,FK
+    string bookId PK FK
+    string authorId PK FK
   }
 
   BookGenre {
-    string bookId PK,FK
-    string genreId PK,FK
+    string bookId PK FK
+    string genreId PK FK
   }
 
   BookFormat {
-    string bookId PK,FK
+    string bookId PK FK
     enum format PK
   }
 
@@ -64,9 +64,9 @@ erDiagram
   }
 
   OrderItem {
-    string orderId PK,FK
-    string bookId PK,FK
-    enum format PK,FK
+    string orderId PK FK
+    string bookId PK FK
+    enum format PK FK
     int quantity
     int unitPriceCents
   }
