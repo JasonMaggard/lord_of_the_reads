@@ -113,7 +113,7 @@ docker compose down
 
 Dev Experience:
 - I enforced Docker-first control for start/stop/testing (instead of host-process assumptions).
-- You required dev-only Playground/introspection.
+- I required dev-only GraphQL Playground introspection.
 - Improved logging
 
 UI Experience
