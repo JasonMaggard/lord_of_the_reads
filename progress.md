@@ -12,8 +12,8 @@
 ## Current Snapshot
 
 - Date: 2026-03-04
-- Active phase: Phase 9 implementation complete (awaiting manual review)
-- Overall status: In progress (Phases 1-9 implemented)
+- Active phase: Phase 10 implementation complete (awaiting manual review)
+- Overall status: In progress (Phases 1-10 implemented)
 
 ---
 
@@ -357,3 +357,48 @@ Lessons learned:
 
 Next step:
 - Manual review of Phase 9 behavior, then commit approved Phase 8 + Phase 9 changes.
+
+### Phase 10 — Test pass and final readiness review
+
+Status: ✅ Implemented (pending manual review)
+
+Completed work:
+- Added focused frontend Vitest coverage for critical app flows:
+	- test tooling/config in `web/vite.config.ts` and `web/src/test/setup.ts`
+	- UI behavior tests in `web/src/App.test.tsx`
+	- test scripts/deps in `web/package.json`
+- Expanded API integration smoke checks in `api/test/app.e2e-spec.ts`:
+	- root endpoint response
+	- `/health` readiness payload
+	- GraphQL books/users query smoke
+	- GraphQL error-format smoke
+- Finalized runbook-style README for Docker-first workflows in `README.md`:
+	- start/stop commands
+	- migrate/seed commands
+	- Dockerized test/build commands
+	- manual verification checklist
+
+Manual checks run (Docker only):
+- `POSTGRES_PORT=5433 docker compose down`
+- `POSTGRES_PORT=5433 docker compose up -d postgres api web`
+- `POSTGRES_PORT=5433 docker compose exec api npx prisma generate`
+- `POSTGRES_PORT=5433 docker compose exec api npm run test:e2e` (passes)
+- `POSTGRES_PORT=5433 docker compose exec web npm install`
+- `POSTGRES_PORT=5433 docker compose exec web npm run test` (passes)
+- `POSTGRES_PORT=5433 docker compose exec api npm run build` (passes)
+- `POSTGRES_PORT=5433 docker compose exec web npm run build` (passes)
+
+Deviations from initial plan:
+- Manual replay checklist items are documented in README and partially exercised via smoke tests; full business-flow replay remains a manual UI/GraphQL walkthrough step.
+
+Errors made / issues encountered:
+- Docker API startup initially failed because host port `3000` was occupied; resolved by freeing the host port before compose startup.
+- API e2e initially failed due to missing generated Prisma client in container; resolved with `prisma generate` in `api` container.
+- Frontend tests required additional jsdom browser API shims (`matchMedia`, `ResizeObserver`) and stable Apollo hook mocks to handle rerenders.
+
+Lessons learned:
+- In this repo, test/build reliability improves when all checks run from compose containers with explicit dependency prep.
+- Mantine in jsdom requires small environment shims for stable unit tests.
+
+Next step:
+- Manual review of Phase 10 test/readme updates, then commit Phase 10.
