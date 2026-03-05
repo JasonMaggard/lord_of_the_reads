@@ -34,17 +34,17 @@ erDiagram
   }
 
   BookAuthor {
-    string bookId PK FK
-    string authorId PK FK
+    string bookId PK
+    string authorId PK
   }
 
   BookGenre {
-    string bookId PK FK
-    string genreId PK FK
+    string bookId PK
+    string genreId PK
   }
 
   BookFormat {
-    string bookId PK FK
+    string bookId PK
     enum format PK
   }
 
@@ -64,9 +64,9 @@ erDiagram
   }
 
   OrderItem {
-    string orderId PK FK
-    string bookId PK FK
-    enum format PK FK
+    string orderId PK
+    string bookId PK
+    enum format PK
     int quantity
     int unitPriceCents
   }
