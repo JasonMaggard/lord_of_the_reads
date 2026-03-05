@@ -11,9 +11,9 @@
 
 ## Current Snapshot
 
-- Date: 2026-03-04
-- Active phase: Phase 10 implementation complete (awaiting manual review)
-- Overall status: In progress (Phases 1-10 implemented)
+- Date: 2026-03-05
+- Active phase: Phase 11 implementation complete (awaiting manual review)
+- Overall status: In progress (Phases 1-11 implemented)
 
 ---
 
@@ -402,3 +402,35 @@ Lessons learned:
 
 Next step:
 - Manual review of Phase 10 test/readme updates, then commit Phase 10.
+
+### Phase 11 — Cart bundle checkout flow
+
+Status: ✅ Implemented (pending manual review)
+
+Completed work:
+- Refactored checkout UI from single-book purchase to cart-based flow in `web/src/App.tsx`.
+- Added `Add to cart` action using selected book + format + quantity.
+- Added cart line aggregation behavior:
+	- duplicate `bookId + format` entries merge by incrementing quantity.
+- Added cart item list UI with per-line remove action.
+- Updated checkout mutation payload to submit all cart items in one bundled `items` array.
+- Updated checkout enabled-state logic:
+	- requires selected user
+	- requires non-empty cart.
+- Cleared cart after successful checkout mutation.
+
+Manual checks run (Docker only):
+- `POSTGRES_PORT=5433 docker compose exec web npm run test` (passes)
+- `POSTGRES_PORT=5433 docker compose exec web npm run build` (passes)
+
+Deviations from initial plan:
+- This phase extends MVP checkout UX beyond the original single-item path to support explicit bundled cart checkout.
+
+Errors made / issues encountered:
+- None blocking; implementation passed existing frontend test suite and production build.
+
+Lessons learned:
+- Keeping cart line identity as `bookId + format` matches backend order-item uniqueness and simplifies bundling behavior.
+
+Next step:
+- Manual UX verification of multi-item checkout flow, then commit approved Phase 11 change.

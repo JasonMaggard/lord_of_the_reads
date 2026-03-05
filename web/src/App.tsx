@@ -69,6 +69,12 @@ type Book = {
 };
 
 type User = { id: string; name: string };
+type CartItem = {
+  bookId: string;
+  title: string;
+  format: string;
+  quantity: number;
+};
 
 const PAGE_SIZE = 12;
 
@@ -80,6 +86,7 @@ function App() {
   const [page, setPage] = useState(1);
   const [checkoutFormat, setCheckoutFormat] = useState('SOFTCOVER');
   const [checkoutQty, setCheckoutQty] = useState(1);
+  const [cartItems, setCartItems] = useState<CartItem[]>([]);
 
   const [bookSearch] = useDebouncedValue(bookSearchInput, 250);
   const [userSearch] = useDebouncedValue(userSearchInput, 250);
@@ -118,7 +125,8 @@ function App() {
     [users],
   );
 
-  const canCheckout = !!selectedUserId && !!selectedBook && checkoutQty > 0 && !!checkoutFormat;
+  const canAddToCart = !!selectedBook && checkoutQty > 0 && !!checkoutFormat;
+  const canCheckout = !!selectedUserId && cartItems.length > 0;
 
   return (
     <Box maw={1200} mx="auto" p="md">
@@ -170,7 +178,14 @@ function App() {
                 <Carousel slideSize={{ base: '100%', sm: '50%', md: '33.333333%' }} slideGap="md">
                   {books.map((book) => (
                     <Carousel.Slide key={book.id}>
-                      <Card withBorder h="100%">
+                      <Card
+                        withBorder
+                        h="100%"
+                        style={{
+                          borderColor:
+                            selectedBook?.id === book.id ? 'var(--mantine-color-blue-4)' : undefined,
+                        }}
+                      >
                         <Stack gap="xs">
                           <Group justify="space-between">
                             <Text fw={600}>{book.title}</Text>
@@ -228,32 +243,107 @@ function App() {
 
             <Group>
               <Button
+                variant="light"
+                disabled={!canAddToCart}
+                onClick={() => {
+                  if (!selectedBook) {
+                    return;
+                  }
+
+                  const cartKey = `${selectedBook.id}:${checkoutFormat}`;
+
+                  setCartItems((currentItems) => {
+                    const existingIndex = currentItems.findIndex(
+                      (item) => `${item.bookId}:${item.format}` === cartKey,
+                    );
+
+                    if (existingIndex === -1) {
+                      return [
+                        ...currentItems,
+                        {
+                          bookId: selectedBook.id,
+                          title: selectedBook.title,
+                          format: checkoutFormat,
+                          quantity: checkoutQty,
+                        },
+                      ];
+                    }
+
+                    return currentItems.map((item, index) =>
+                      index === existingIndex
+                        ? {
+                            ...item,
+                            quantity: item.quantity + checkoutQty,
+                          }
+                        : item,
+                    );
+                  });
+                }}
+              >
+                Add to cart
+              </Button>
+
+              <Button
                 disabled={!canCheckout}
                 loading={checkoutLoading}
                 onClick={async () => {
-                  if (!selectedUserId || !selectedBook) {
+                  if (!selectedUserId || cartItems.length === 0) {
                     return;
                   }
 
                   await checkout({
                     variables: {
                       userId: selectedUserId,
-                      items: [
-                        {
-                          bookId: selectedBook.id,
-                          format: checkoutFormat,
-                          quantity: checkoutQty,
-                        },
-                      ],
+                      items: cartItems.map((item) => ({
+                        bookId: item.bookId,
+                        format: item.format,
+                        quantity: item.quantity,
+                      })),
                     },
                   });
 
+                  setCartItems([]);
                   await refetchBooks();
                 }}
               >
                 Checkout
               </Button>
             </Group>
+
+            <Stack gap="xs">
+              <Text fw={600}>Cart ({cartItems.length})</Text>
+              {cartItems.length === 0 ? (
+                <Text c="dimmed" size="sm">
+                  No books in cart.
+                </Text>
+              ) : (
+                cartItems.map((item) => (
+                  <Group key={`${item.bookId}:${item.format}`} justify="space-between" align="center">
+                    <Text size="sm">
+                      {item.title} · {item.format} · Qty {item.quantity}
+                    </Text>
+                    <Button
+                      size="xs"
+                      variant="subtle"
+                      color="red"
+                      onClick={() => {
+                        setCartItems((currentItems) =>
+                          currentItems.filter(
+                            (cartItem) =>
+                              !(
+                                cartItem.bookId === item.bookId &&
+                                cartItem.format === item.format
+                              ),
+                          ),
+                        );
+                      }}
+                    >
+                      Remove
+                    </Button>
+                  </Group>
+                ))
+              )}
+            </Stack>
 
             {checkoutError && <Alert color="red">{checkoutError.message}</Alert>}
             {checkoutData?.checkout?.id && (
