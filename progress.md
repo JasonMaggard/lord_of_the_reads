@@ -12,8 +12,8 @@
 ## Current Snapshot
 
 - Date: 2026-03-04
-- Active phase: Phase 6 complete
-- Overall status: In progress (Phase 7 not started)
+- Active phase: Phase 7 complete
+- Overall status: In progress (Phase 8 not started)
 
 ---
 
@@ -242,3 +242,42 @@ Lessons learned:
 
 Next step:
 - Start Phase 7: checkout and order price memoization flow.
+
+### Phase 7 — Checkout and order price memoization
+
+Status: ✅ Completed
+
+Completed work:
+- Added `OrdersModule` with GraphQL mutation/query surface:
+	- `checkout(userId, items)`
+	- `order(id)`
+	- `userOrders(userId, limit, offset)`
+- Implemented transactional checkout service behavior:
+	- validates user and item quantities
+	- merges duplicate input lines (`bookId + format`)
+	- validates `bookId + format` pairs against `BookFormat`
+	- creates order + order items atomically
+	- memoizes `unitPriceCents` from current `Book.priceCents` at checkout time
+- Added GraphQL order types and checkout input types.
+- Wired `OrdersModule` into `AppModule`.
+
+Manual checks run:
+- `npm run build` in `api` (passes).
+- GraphQL checkout mutation #1 for `book_0001`/`SOFTCOVER` returned `unitPriceCents=1037`.
+- Updated book price in DB (+111).
+- GraphQL checkout mutation #2 returned `unitPriceCents=1148`.
+- Queried both orders via GraphQL `order(id)` and confirmed first order retained old price while second used new price.
+- Restored temporary DB price update after test to keep data baseline stable.
+
+Deviations from initial plan:
+- Added `order(id)` and `userOrders(...)` read queries in Phase 7 to make memoization verification and frontend integration straightforward.
+
+Errors made / issues encountered:
+- None blocking; checkout flow validated end-to-end.
+
+Lessons learned:
+- Input line merging avoids composite-key conflicts while preserving expected cart semantics.
+- Transactional write path keeps order and order items consistent with minimal resolver complexity.
+
+Next step:
+- Start Phase 8: frontend thin vertical slice (Mantine) for book list/detail, user selector, and checkout path.
