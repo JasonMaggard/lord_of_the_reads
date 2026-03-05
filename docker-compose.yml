@@ -1,0 +1,56 @@
+services:
+  postgres:
+    image: postgres:17-alpine
+    container_name: lord-of-the-reads-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-lord_of_the_reads}
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres} -d ${POSTGRES_DB:-lord_of_the_reads}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  api:
+    image: node:25-alpine
+    container_name: lord-of-the-reads-api
+    working_dir: /app
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      NODE_ENV: development
+      PORT: 3000
+      DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@postgres:5432/${POSTGRES_DB:-lord_of_the_reads}
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./api:/app
+      - api_node_modules:/app/node_modules
+    command: sh -c "npm install && npm run start:dev"
+
+  web:
+    image: node:25-alpine
+    container_name: lord-of-the-reads-web
+    working_dir: /app
+    depends_on:
+      - api
+    environment:
+      NODE_ENV: development
+    ports:
+      - "5173:5173"
+    volumes:
+      - ./web:/app
+      - web_node_modules:/app/node_modules
+    command: sh -c "npm install && npm run dev -- --host 0.0.0.0 --port 5173"
+
+volumes:
+  postgres_data:
+  api_node_modules:
+  web_node_modules:

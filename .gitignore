@@ -1,8 +1,15 @@
-# Nestjs specific
-/dist
-/node_modules
-/build
-/tmp
+# Monorepo / nested app artifacts
+**/node_modules/
+**/dist/
+**/build/
+**/.turbo/
+**/.cache/
+**/.vite/
+**/coverage/
+api/.nestjs/
+api/tmp/
+web/dist/
+web/.vercel/
 
 # Logs
 logs
@@ -15,10 +22,13 @@ lerna-debug.log*
 
 # dotenv environment variable files
 .env
-.env.development
-.env.test
-.env.production
+.env.*
+!.env.example
 
 # temp directory
 .temp
 .tmp
+tmp/
+
+# docker / local volumes
+.docker/
